@@ -27,8 +27,9 @@ class MainActivity : AppCompatActivity() {
         R.raw.cart32,R.raw.cart33,R.raw.cart34,R.raw.cart35,R.raw.cart36,R.raw.cart37,R.raw.cart38,R.raw.cart39,
         R.raw.cart40,R.raw.cart41,R.raw.cart42,R.raw.cart43,R.raw.cart44,R.raw.cart45,R.raw.cart46,R.raw.cart47,
         R.raw.cart48,R.raw.cart49,R.raw.cart50,R.raw.cart51,R.raw.cart52,R.raw.cart53,R.raw.cart54)
-
-
+    var co = 0
+    var resto = true
+    lateinit var  hilo : hilo
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         binding = ActivityMainBinding.inflate(layoutInflater)
@@ -38,30 +39,44 @@ class MainActivity : AppCompatActivity() {
 
         val cartitas = Array<Cartas>(54,{Cartas(R.drawable.carta1,binding.carta,this,R.raw.loteria1)})
 
+        corrutina(cartitas,this).start()
+        hilo = hilo(cartitas,this)
+
         binding.btnIniciar.setOnClickListener {
-            hilo(cartitas,this).start()
-            corrutina(cartitas,this).start()
+            if (co>0){
+                hilo.terminarHilo()
+                hilo = hilo(cartitas,this)
+                hilo.start()
+            }else{
+                hilo.start()
+                co++
+            }
+            //corrutina(cartitas,this).start()
             binding.btnPausar.visibility = View.VISIBLE
+            binding.btnIniciar.visibility = View.GONE
         }
 
         binding.btnPausar.setOnClickListener {
+            hilo.pausarHilo()
             binding.btnResto.visibility = View.VISIBLE
+            binding.btnIniciar.setText("Reiniciar")
+            binding.btnIniciar.visibility = View.VISIBLE
         }
-
+        binding.btnResto.setOnClickListener {
+            val mp2 = MediaPlayer.create(this, R.raw.restantes)
+            mp2.start()
+            resto=false
+            hilo.despausarHilo()
+        }
     }
 
     fun corrutina(arr:Array<Cartas>,este:MainActivity) = GlobalScope.launch{
         var este = este
         var arr = arr
-        //var carta = carta
-            arr.shuffle()
-            for (i in 0..arr.size-1){
-                este.runOnUiThread {
-                    arr[i].rAudio()
-                    arr[i].mImg()
-                }
-                delay(3000)
-            }
+        for (i in 0..arr.size-1){
+            arr[i].audio=este.audio[i]
+            arr[i].numero=este.cartas[i]
+        }
     }
 }
 
@@ -70,11 +85,46 @@ class MainActivity : AppCompatActivity() {
 class hilo(arr:Array<Cartas>,este:MainActivity):Thread(){
     var este = este
     var arr = arr
+    private var ejecutar = true
+    private var pausar = false
     override fun run() {
         super.run()
-        for (i in 0..arr.size-1){
-            arr[i].audio=este.audio[i]
-            arr[i].numero=este.cartas[i]
+        var cont =0
+        var cont2 =0
+        arr.shuffle()
+        while(ejecutar){
+            if(!pausar){
+                // SI NO (!) PAUSADO
+                if (cont == arr.size-1){
+                    //cont =0;
+                    //cont2 =0;
+                    terminarHilo()
+                }
+                if(!este.resto){
+                    este.resto =true
+                    sleep(2000)
+                }
+
+                este.runOnUiThread {
+                    arr[cont++].rAudio()
+                    arr[cont2++].mImg()
+                    println("va en la carta: "+cont)
+                }
+
+            }
+            sleep(2000)
         }
+    }
+    fun terminarHilo(){
+        ejecutar = false
+    }
+    fun pausarHilo(){
+        pausar = true
+    }
+    fun despausarHilo(){
+        pausar = false
+    }
+    fun estaPausado() : Boolean {
+        return pausar
     }
 }

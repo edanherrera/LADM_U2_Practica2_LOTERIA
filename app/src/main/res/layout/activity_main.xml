@@ -12,7 +12,7 @@
         android:layout_width="200dp"
         android:layout_height="300dp"
         android:layout_centerHorizontal="true"
-        android:src="@drawable/carta2"
+        android:src="@drawable/portada"
         android:padding="10dp"/>
     <Button
         android:layout_width="wrap_content"
